@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GigaCodeAgentSettings">
+    <option name="autoApproveEdits" value="true" />
+    <option name="autoApprovedCommands">
+      <list>
+        <Execute>
+          <option name="pattern" value="python --version 2&gt;&amp;1" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="C:UsersfocusAppDataLocalPythonpythoncore-3.14-64python.exe venv *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="..venvScriptsActivate.ps1" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="..venvScriptspip.exe install *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="..venvScriptspip.exe show *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="dir C:\Users\focus\IdeaProjects\PulseteAdmin\.venv\Lib\site-packages\flet" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="cd *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="pip install *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python pip *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py pip *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py C:/Users/focus/IdeaProjects/PulseteAdmin/main.py" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet; print(flet.__version__)&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet as ft; print(dir(ft))&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet as ft; help(ft.run)&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet as ft; print(dir(ft.padding))&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet as ft; help(ft.padding.value)&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet as ft; help(ft.padding.Padding)&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet as ft; print([x for x in dir(ft) if 'margin' in x.lower() or 'padding' in x.lower()])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet as ft; print([x for x in dir(ft) if 'border' in x.lower()])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet as ft; print(dir(ft.border))&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet as ft; help(ft.border.Border)&quot; 2&gt;&amp;1" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet as ft; print(ft.border.Border.__doc__); print([m for m in dir(ft.border.Border) if not m.startswith('_')])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet as ft; print(ft.border.BorderSide.__doc__); print([m for m in dir(ft.border.BorderSide) if not m.startswith('_')])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="py -c &quot;import flet as ft; import inspect; print(inspect.signature(ft.Column.__init__))&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".venvScriptspython.exe uvicorn *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Start-Process -NoNewWindow -FilePath &quot;.venv\Scripts\python.exe&quot; -ArgumentList &quot;-m&quot;, &quot;uvicorn&quot;, &quot;app.main:app&quot;, &quot;--reload&quot;, &quot;--port&quot;, &quot;8000&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Set-Location C:/Users/focus/IdeaProjects/PulseBackend" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Set-Location C:/Users/focus/IdeaProjects/PulseteAdmin" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="where *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe main.py" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet as ft; icons = [a for a in dir(ft.icons) if 'ADD' in a.upper()]; print('\n'.join(icons[:20]))&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet as ft; icons = [a for a in dir(ft.icons) if not a.startswith('_')]; print('\n'.join(icons[:50]))&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet; print(flet.__version__); import flet.controls.material.icons as icons; print([a for a in dir(icons.Icons) if not a.startswith('_')][:100])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet.controls.material.icons as icons; print('MORE:', [a for a in dir(icons.Icons) if 'MORE' in a]); print('DELETE:', [a for a in dir(icons.Icons) if 'DELETE' in a])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet as ft; print([a for a in dir(ft) if 'color' in a.lower()][:20])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet as ft; import inspect; sig = inspect.signature(ft.Text.__init__); print([p for p in sig.parameters.keys()][:30])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet as ft; print([a for a in dir(ft.alignment) if not a.startswith('_')][:30])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet as ft; a = ft.alignment.Alignment(0); print(a)&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet as ft; a = ft.alignment.Alignment(0, 0); print(a)&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet as ft; import inspect; sig = inspect.signature(ft.Row.__init__); print([p for p in sig.parameters.keys()][:30])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet as ft; import inspect; page = ft.Page; print([m for m in dir(page) if 'wait' in m.lower() or 'run' in m.lower()])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet as ft; print(dir(ft.Page)); print('---'); print([a for a in dir(ft) if 'window' in a.lower()])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe -c &quot;import flet as ft; def main(page): page.add(ft.Text('Hello World')); ft.run(main)&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".\.venv\Scripts\python.exe test_flet.py" />
+        </Execute>
+      </list>
+    </option>
+    <option name="autoApprovedReads">
+      <list>
+        <Read>
+          <option name="pattern" value="$PROJECT_DIR$/../Pulsete/pom.xml" />
+        </Read>
+        <Read>
+          <option name="pattern" value="$PROJECT_DIR$/../Pulsete/build.gradle" />
+        </Read>
+        <Read>
+          <option name="pattern" value="$PROJECT_DIR$/../Pulsete/*" />
+        </Read>
+        <Read>
+          <option name="pattern" value="$PROJECT_DIR$/../PulseBackend/*" />
+        </Read>
+      </list>
+    </option>
+  </component>
+</project>
