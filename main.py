@@ -29,7 +29,8 @@ class ApiService:
         return response.json()
 
     async def delete_student(self, student_id: int) -> bool:
-        response = await self.client.delete(f"/students?id={student_id}")
+        response = await self.client.delete(f"/students?student_id={student_id}")
+        print(f"DEBUG delete_student: status={response.status_code}, body={response.text}")
         return response.status_code in (200, 204)
 
     async def get_answers(self) -> list[dict]:
@@ -139,9 +140,12 @@ def students_page(
         _update()
 
     def _close_dialog():
-        if page.dialog:
-            page.dialog.open = False
-            _update()
+        if page.overlay:
+            for c in list(page.overlay):
+                if isinstance(c, ft.AlertDialog):
+                    c.open = False
+            page.update()
+            print("DEBUG _close_dialog: done")
 
     def _on_add_click(e):
         name_field = ft.TextField(
@@ -151,6 +155,9 @@ def students_page(
             autofocus=True,
         )
 
+        def _on_confirm(ie):
+            page.run_task(_create_student, name_field.value)
+
         dialog = ft.AlertDialog(
             title=ft.Text("Добавить ученика"),
             content=ft.Column(
@@ -159,20 +166,20 @@ def students_page(
                 expand=True,
             ),
             actions=[
-                ft.TextButton("Отмена", on_click=_close_dialog),
+                ft.TextButton("Отмена", on_click=lambda ie: page.overlay.remove(dialog) or page.update()),
                 ft.Button(
                     "Добавить",
                     bgcolor="#5A3D8A",
                     color="#FFFFFF",
-                    on_click=lambda _: asyncio.create_task(_create_student(name_field.value)),
+                    on_click=_on_confirm,
                 ),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
+            open=True,
         )
 
-        page.dialog = dialog
-        dialog.open = True
-        _update()
+        page.overlay.append(dialog)
+        page.update()
 
     async def _create_student(name: str):
         if not name or not name.strip():
@@ -181,7 +188,9 @@ def students_page(
 
         try:
             student = await api.create_student(name.strip())
+            print(f"DEBUG _create_student: student created, calling _close_dialog")
             _close_dialog()
+            print(f"DEBUG _create_student: _close_dialog returned")
             await _load_data()
             _show_snackbar(f"Ученик {student['name']} добавлен")
         except httpx.HTTPStatusError as ex:
@@ -311,25 +320,27 @@ def students_page(
             title=ft.Text("Удалить ученика"),
             content=ft.Text(f"Вы уверены, что хотите удалить {student['name']}?"),
             actions=[
-                ft.TextButton("Отмена", on_click=_close_dialog),
+                ft.TextButton("Отмена", on_click=lambda ie: page.overlay.remove(dialog) or page.update()),
                 ft.Button(
                     "Удалить",
                     bgcolor="#A4442A",
                     color="#FFFFFF",
-                    on_click=lambda _: _confirm_delete(student),
+                    on_click=lambda ie: page.run_task(_confirm_delete, student),
                 ),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
+            open=True,
         )
 
-        page.dialog = dialog
-        dialog.open = True
-        _update()
+        page.overlay.append(dialog)
+        page.update()
 
     async def _confirm_delete(student: dict):
+        print(f"DEBUG _confirm_delete: deleting {student['name']} (id={student['id']})")
         _close_dialog()
         try:
-            await api.delete_student(student["id"])
+            result = await api.delete_student(student["id"])
+            print(f"DEBUG _confirm_delete: api returned {result}")
             await _load_data()
             _show_snackbar(f"Ученик {student['name']} удалён")
         except Exception as ex:
