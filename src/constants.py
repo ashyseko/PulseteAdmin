@@ -43,5 +43,4 @@ NAV_HEIGHT = 60
 APP_TITLE = "PulseteAdmin"
 PAGE_TITLE = "Пульс класса - Админ"
 FONT_FAMILY = "Inter"
-DATE_LABEL = "21 – 27 апр"
 SUBTITLE_PLACEHOLDER = "Последние ответы · загрузка..."

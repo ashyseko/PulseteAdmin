@@ -37,6 +37,7 @@ async def main(page: ft.Page):
         alignment=ft.MainAxisAlignment.START,
         expand=True,
         horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+        margin=ft.Margin(left=100, right=100),
     )
 
     page.controls.append(main_column)

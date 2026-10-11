@@ -1,6 +1,7 @@
 """UI-компоненты и логика экранов."""
 
 import asyncio
+from datetime import datetime, timedelta
 
 import flet as ft
 
@@ -28,7 +29,6 @@ from src.constants import (
     COLOR_TEXT_TERTIARY,
     COLOR_TEXT_WHITE,
     COLOR_TEXT_YELLOW,
-    DATE_LABEL,
     FONT_FAMILY,
     NAV_HEIGHT,
     PAGE_TITLE,
@@ -81,6 +81,18 @@ def get_answer_circle(value: int | None) -> ft.Container:
         border_radius=13,
         alignment=ft.alignment.Alignment(0, 0),
     )
+
+
+def format_last_answer(ts: str | None) -> str:
+    """Форматирует дату последнего ответа (UTC → Moscow UTC+3)."""
+    if not ts:
+        return ""
+    try:
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        dt_msk = dt + timedelta(hours=3)
+        return dt_msk.strftime("%d.%m.%Y %H:%M")
+    except (ValueError, AttributeError):
+        return ""
 
 
 def get_avatar_bg(has_answers: bool) -> str:
@@ -199,11 +211,15 @@ def students_page(
 
     def _render_student_list():
         answers_map: dict[int, dict[int, int]] = {}
+        last_answer_time: dict[int, str] = {}
         for ans in answers_data:
             sid = ans["student_id"]
             if sid not in answers_map:
                 answers_map[sid] = {}
             answers_map[sid][ans["question_id"]] = ans["value"]
+            ts = ans.get("created_at")
+            if ts and ts > last_answer_time.get(sid, ""):
+                last_answer_time[sid] = ts
 
         def sort_key(student):
             has_answers = any(
@@ -218,7 +234,8 @@ def students_page(
 
         for student in sorted_students:
             last_answers = _get_last_answers(student["id"], answers_map)
-            row = _create_student_row(student, last_answers)
+            last_time = last_answer_time.get(student["id"])
+            row = _create_student_row(student, last_answers, last_time)
             student_list_inner.controls.append(row)
 
         students_with_answers = sum(
@@ -238,7 +255,7 @@ def students_page(
             result.append(student_answers.get(q["id"]))
         return result[:5]
 
-    def _create_student_row(student: dict, last_answers: list[int | None]) -> ft.Container:
+    def _create_student_row(student: dict, last_answers: list[int | None], last_time: str | None) -> ft.Container:
         has_answers = any(a is not None for a in last_answers)
         initials = get_initials(student["name"])
 
@@ -252,8 +269,13 @@ def students_page(
         )
 
         name_text = ft.Text(student["name"], size=14, weight=ft.FontWeight.W_400, color=COLOR_TEXT_PRIMARY)
-        code_text = ft.Text(str(student["code"]), size=11, weight=ft.FontWeight.W_400, color=COLOR_TEXT_SECONDARY)
-        student_info = ft.Column(controls=[name_text, code_text], spacing=2, height=33, width=150)
+        code_text = ft.Text(
+            f"{student['code']}{f'  •  {format_last_answer(last_time).strip()}' if last_time else ''}",
+            size=11,
+            weight=ft.FontWeight.W_400,
+            color=COLOR_TEXT_SECONDARY,
+        )
+        student_info = ft.Column(controls=[name_text, code_text], spacing=2, height=33, width=175)
 
         left_block = ft.Row(
             controls=[avatar, student_info],
@@ -325,23 +347,30 @@ def students_page(
         except Exception as ex:
             _show_snackbar(f"Ошибка удаления: {ex}", error=True)
 
+    def _on_refresh_click(e):
+        page.run_task(_load_data)
+
     header = ft.Container(
         content=ft.Column(
             controls=[
                 ft.Row(
                     controls=[
                         ft.Text("Ученики", size=22, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
-                        ft.Container(
-                            content=ft.Text(DATE_LABEL, size=12, weight=ft.FontWeight.W_500, color=COLOR_TEXT_PRIMARY),
-                            bgcolor=BG_COLOR_CARD,
-                            padding=ft.Padding.symmetric(horizontal=14, vertical=10),
-                            border_radius=6,
-                        ),
                     ],
                     spacing=4,
                     wrap=True,
                 ),
-                subtitle_text,
+                ft.Row(
+                    controls=[
+                        subtitle_text,
+                        ft.IconButton(
+                            icon=ft.icons.Icons.REFRESH,
+                            icon_size=20,
+                            on_click=_on_refresh_click,
+                        ),
+                    ],
+                    spacing=4,
+                ),
             ],
             spacing=4,
             wrap=True,
@@ -361,7 +390,7 @@ def students_page(
         ),
         bgcolor=COLOR_TEXT_PURPLE,
         padding=ft.Padding.symmetric(vertical=14, horizontal=20),
-        margin=ft.Margin.only(left=2, right=2, top=4, bottom=4),
+        margin=ft.Margin.only(top=4, bottom=4),
         on_click=_on_add_click,
         expand=False,
     )
