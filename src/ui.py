@@ -1,50 +1,44 @@
-"""
-Приложение для классного руководителя PulseteAdmin.
-Управление учениками и просмотр их ответов.
-"""
+"""UI-компоненты и логика экранов."""
 
 import asyncio
 
 import flet as ft
-import httpx
+
+from src.api import ApiService
+from src.constants import (
+    BG_ANSWER_GREEN,
+    BG_ANSWER_NEUTRAL,
+    BG_ANSWER_RED,
+    BG_ANSWER_YELLOW,
+    BG_AVATAR_WITH_ANSWERS,
+    BG_AVATAR_WITHOUT_ANSWERS,
+    BG_BORDER,
+    BG_COLOR_CARD,
+    BG_NAV_ACTIVE,
+    BG_NAV_CONTAINER,
+    BG_NAV_INACTIVE,
+    BG_SNACKBAR_ERROR,
+    BG_SNACKBAR_SUCCESS,
+    COLOR_TEXT_GREEN,
+    COLOR_TEXT_PLACEHOLDER,
+    COLOR_TEXT_PRIMARY,
+    COLOR_TEXT_PURPLE,
+    COLOR_TEXT_RED,
+    COLOR_TEXT_SECONDARY,
+    COLOR_TEXT_TERTIARY,
+    COLOR_TEXT_WHITE,
+    COLOR_TEXT_YELLOW,
+    DATE_LABEL,
+    FONT_FAMILY,
+    NAV_HEIGHT,
+    PAGE_TITLE,
+    SUBTITLE_PLACEHOLDER,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
+)
 
 
-API_BASE_URL = "http://localhost:8000"
-
-
-class ApiService:
-    """Сервис для взаимодействия с PulseBackend API."""
-
-    def __init__(self):
-        self.client = httpx.AsyncClient(base_url=API_BASE_URL, timeout=10.0)
-
-    async def get_students(self) -> list[dict]:
-        response = await self.client.get("/students")
-        response.raise_for_status()
-        return response.json()
-
-    async def create_student(self, name: str) -> dict:
-        response = await self.client.post("/students", json={"name": name})
-        response.raise_for_status()
-        return response.json()
-
-    async def delete_student(self, student_id: int) -> bool:
-        response = await self.client.delete(f"/students?student_id={student_id}")
-        print(f"DEBUG delete_student: status={response.status_code}, body={response.text}")
-        return response.status_code in (200, 204)
-
-    async def get_answers(self) -> list[dict]:
-        response = await self.client.get("/answers")
-        response.raise_for_status()
-        return response.json()
-
-    async def get_questions(self) -> list[dict]:
-        response = await self.client.get("/questions")
-        response.raise_for_status()
-        return response.json()
-
-    async def close(self):
-        await self.client.aclose()
+# --- Вспомогательные функции ---
 
 
 def get_initials(name: str) -> str:
@@ -61,23 +55,23 @@ def get_answer_circle(value: int | None) -> ft.Container:
     """Создать круг с оценкой или прочерком."""
     if value is None:
         return ft.Container(
-            content=ft.Text("—", size=12, weight=ft.FontWeight.W_600, color="#B0AEA9"),
+            content=ft.Text("—", size=12, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PLACEHOLDER),
             width=26,
             height=26,
-            bgcolor="#EDEDEB",
+            bgcolor=BG_ANSWER_NEUTRAL,
             border_radius=13,
             alignment=ft.alignment.Alignment(0, 0),
         )
 
     if value >= 4:
-        color = "#2F6B47"
-        bg_color = "#D8C8F0"
+        color = COLOR_TEXT_GREEN
+        bg_color = BG_ANSWER_GREEN
     elif value == 3:
-        color = "#8A6A1F"
-        bg_color = "#F7ECD0"
+        color = COLOR_TEXT_YELLOW
+        bg_color = BG_ANSWER_YELLOW
     else:
-        color = "#A4442A"
-        bg_color = "#FBE3DC"
+        color = COLOR_TEXT_RED
+        bg_color = BG_ANSWER_RED
 
     return ft.Container(
         content=ft.Text(str(value), size=12, weight=ft.FontWeight.W_600, color=color),
@@ -90,36 +84,33 @@ def get_answer_circle(value: int | None) -> ft.Container:
 
 
 def get_avatar_bg(has_answers: bool) -> str:
-    return "#D8C8F0" if has_answers else "#E8E7E4"
+    return BG_AVATAR_WITH_ANSWERS if has_answers else BG_AVATAR_WITHOUT_ANSWERS
 
 
 def get_avatar_color(has_answers: bool) -> str:
-    return "#5A3D8A" if has_answers else "#8A8986"
+    return COLOR_TEXT_PURPLE if has_answers else COLOR_TEXT_TERTIARY
+
+
+# --- Страница учеников ---
 
 
 def students_page(
-        students_data: list[dict],
-        answers_data: list[dict],
-        questions_data: list[dict],
-        page: ft.Page,
-        api: ApiService,
+    students_data: list[dict],
+    answers_data: list[dict],
+    questions_data: list[dict],
+    page: ft.Page,
+    api: ApiService,
 ):
     """Страница списка учеников. Получает готовые данные для рендера."""
-    page.title = "Пульс класса - Админ"
+    page.title = PAGE_TITLE
     page.padding = 0
-    page.window_width = 400
-    page.window_height = 800
-
-    ft.Text(
-        "Test",
-        size=13,
-        color="#6D6C6A",
-    )
+    page.window_width = WINDOW_WIDTH
+    page.window_height = WINDOW_HEIGHT
 
     subtitle_text = ft.Text(
-        "Последние ответы · загрузка...",
+        SUBTITLE_PLACEHOLDER,
         size=13,
-        color="#6D6C6A",
+        color=COLOR_TEXT_SECONDARY,
     )
 
     student_list_inner = ft.Column(
@@ -133,7 +124,7 @@ def students_page(
     def _show_snackbar(message: str, error: bool = False):
         snackbar = ft.SnackBar(
             content=ft.Text(message),
-            bgcolor="#A4442A" if error else "#2F6B47",
+            bgcolor=BG_SNACKBAR_ERROR if error else BG_SNACKBAR_SUCCESS,
         )
         page.snack_bar = snackbar
         page.snack_bar.open = True
@@ -145,7 +136,6 @@ def students_page(
                 if isinstance(c, ft.AlertDialog):
                     c.open = False
             page.update()
-            print("DEBUG _close_dialog: done")
 
     def _on_add_click(e):
         name_field = ft.TextField(
@@ -155,9 +145,6 @@ def students_page(
             autofocus=True,
         )
 
-        def _on_confirm(ie):
-            page.run_task(_create_student, name_field.value)
-
         dialog = ft.AlertDialog(
             title=ft.Text("Добавить ученика"),
             content=ft.Column(
@@ -166,12 +153,13 @@ def students_page(
                 expand=True,
             ),
             actions=[
-                ft.TextButton("Отмена", on_click=lambda ie: page.overlay.remove(dialog) or page.update()),
+                ft.TextButton("Отмена", on_click=lambda ie: setattr(dialog, "open", False) or page.update()),
                 ft.Button(
                     "Добавить",
-                    bgcolor="#5A3D8A",
-                    color="#FFFFFF",
-                    on_click=_on_confirm,
+                    bgcolor=COLOR_TEXT_PURPLE,
+                    color=COLOR_TEXT_WHITE,
+                    data=name_field,
+                    on_click=lambda ie: page.run_task(_create_student, ie.control.data.value),
                 ),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
@@ -188,15 +176,13 @@ def students_page(
 
         try:
             student = await api.create_student(name.strip())
-            print(f"DEBUG _create_student: student created, calling _close_dialog")
             _close_dialog()
-            print(f"DEBUG _create_student: _close_dialog returned")
             await _load_data()
             _show_snackbar(f"Ученик {student['name']} добавлен")
         except httpx.HTTPStatusError as ex:
             _show_snackbar(f"Ошибка: {ex.response.status_code}", error=True)
         except Exception as ex:
-            _show_snackbar(f"Ошибка подключения к серверу", error=True)
+            _show_snackbar("Ошибка подключения к серверу", error=True)
 
     async def _load_data():
         """Перезагрузить данные и перерисовать список."""
@@ -229,7 +215,6 @@ def students_page(
         sorted_students = sorted(students_data, key=sort_key)
 
         student_list_inner.controls.clear()
-        print(f"Rendering {len(sorted_students)} students")
 
         for student in sorted_students:
             last_answers = _get_last_answers(student["id"], answers_map)
@@ -266,34 +251,31 @@ def students_page(
             alignment=ft.alignment.Alignment(0, 0),
         )
 
-        name_text = ft.Text(student["name"], size=14, weight=ft.FontWeight.W_400, color="#1A1918")
-        code_text = ft.Text(str(student["code"]), size=11, weight=ft.FontWeight.W_400, color="#6D6C6A")
+        name_text = ft.Text(student["name"], size=14, weight=ft.FontWeight.W_400, color=COLOR_TEXT_PRIMARY)
+        code_text = ft.Text(str(student["code"]), size=11, weight=ft.FontWeight.W_400, color=COLOR_TEXT_SECONDARY)
         student_info = ft.Column(controls=[name_text, code_text], spacing=2, height=33)
 
         left_block = ft.Row(
             controls=[avatar, student_info],
             spacing=10,
-            # align=ft.CrossAxisAlignment.CENTER,
         )
 
         answers_controls = [get_answer_circle(a) for a in last_answers]
         right_block = ft.Row(
             controls=answers_controls,
             spacing=4,
-            # align=ft.CrossAxisAlignment.CENTER,
         )
 
         delete_menu = ft.PopupMenuButton(
-            icon=ft.Icon(ft.icons.Icons.MORE_VERT, size=18, color="#6D6C6A"),
+            icon=ft.Icon(ft.icons.Icons.MORE_VERT, size=18, color=COLOR_TEXT_SECONDARY),
             items=[
                 ft.PopupMenuItem(
                     content=ft.Row(
                         controls=[
-                            ft.Icon(ft.icons.Icons.DELETE_OUTLINE, size=18, color="#A4442A"),
-                            ft.Text("Удалить", size=13, color="#A4442A"),
+                            ft.Icon(ft.icons.Icons.DELETE_OUTLINE, size=18, color=COLOR_TEXT_RED),
+                            ft.Text("Удалить", size=13, color=COLOR_TEXT_RED),
                         ],
                         spacing=8,
-                        # align=ft.CrossAxisAlignment.CENTER,
                     ),
                     on_click=lambda e, s=student: _show_delete_dialog(s),
                 ),
@@ -306,11 +288,10 @@ def students_page(
             content=ft.Row(
                 controls=[left_block, right_block],
                 spacing=10,
-                # align=ft.CrossAxisAlignment.CENTER,
                 expand=True,
             ),
-            bgcolor="white",
-            border=ft.border.Border.all(0, "#E5E4E1"),
+            bgcolor=BG_COLOR_CARD,
+            border=ft.border.Border.all(0, BG_BORDER),
             margin=ft.Margin.only(bottom=2),
             padding=ft.Padding.symmetric(horizontal=12, vertical=10),
         )
@@ -323,8 +304,8 @@ def students_page(
                 ft.TextButton("Отмена", on_click=lambda ie: page.overlay.remove(dialog) or page.update()),
                 ft.Button(
                     "Удалить",
-                    bgcolor="#A4442A",
-                    color="#FFFFFF",
+                    bgcolor=COLOR_TEXT_RED,
+                    color=COLOR_TEXT_WHITE,
                     on_click=lambda ie: page.run_task(_confirm_delete, student),
                 ),
             ],
@@ -336,11 +317,9 @@ def students_page(
         page.update()
 
     async def _confirm_delete(student: dict):
-        print(f"DEBUG _confirm_delete: deleting {student['name']} (id={student['id']})")
         _close_dialog()
         try:
-            result = await api.delete_student(student["id"])
-            print(f"DEBUG _confirm_delete: api returned {result}")
+            await api.delete_student(student["id"])
             await _load_data()
             _show_snackbar(f"Ученик {student['name']} удалён")
         except Exception as ex:
@@ -351,10 +330,10 @@ def students_page(
             controls=[
                 ft.Row(
                     controls=[
-                        ft.Text("Ученики", size=22, weight=ft.FontWeight.W_600, color="#1A1918"),
+                        ft.Text("Ученики", size=22, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
                         ft.Container(
-                            content=ft.Text("21 – 27 апр", size=12, weight=ft.FontWeight.W_500, color="#1A1918"),
-                            bgcolor="white",
+                            content=ft.Text(DATE_LABEL, size=12, weight=ft.FontWeight.W_500, color=COLOR_TEXT_PRIMARY),
+                            bgcolor=BG_COLOR_CARD,
                             padding=ft.Padding.symmetric(horizontal=14, vertical=10),
                             border_radius=6,
                         ),
@@ -373,13 +352,13 @@ def students_page(
     add_button = ft.Container(
         content=ft.Row(
             controls=[
-                ft.Icon(ft.icons.Icons.ADD, size=18, color="#FFFFFF"),
-                ft.Text("Добавить ученика", size=15, weight=ft.FontWeight.W_600, color="#FFFFFF"),
+                ft.Icon(ft.icons.Icons.ADD, size=18, color=COLOR_TEXT_WHITE),
+                ft.Text("Добавить ученика", size=15, weight=ft.FontWeight.W_600, color=COLOR_TEXT_WHITE),
             ],
             spacing=8,
             alignment=ft.MainAxisAlignment.CENTER,
         ),
-        bgcolor="#5A3D8A",
+        bgcolor=COLOR_TEXT_PURPLE,
         padding=ft.Padding.symmetric(vertical=14, horizontal=20),
         margin=ft.Margin.only(left=2, right=2, top=4, bottom=4),
         on_click=_on_add_click,
@@ -387,20 +366,24 @@ def students_page(
 
     student_list_container = ft.Container(
         content=student_list_inner,
-        bgcolor="white",
+        bgcolor=BG_COLOR_CARD,
         margin=ft.Margin.only(top=2),
         padding=ft.Padding.symmetric(horizontal=2),
     )
 
     column = ft.Column(
         controls=[
-            header, add_button, student_list_container],
+            header, add_button, student_list_container,
+        ],
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         scroll=ft.ScrollMode.AUTO,
         expand=True,
     )
 
     return column, _load_data, _render_student_list
+
+
+# --- Нижняя навигация ---
 
 
 def bottom_nav() -> ft.Container:
@@ -420,7 +403,7 @@ def bottom_nav() -> ft.Container:
                         label,
                         size=10,
                         weight=ft.FontWeight.W_600,
-                        color="#FFFFFF" if is_active else "#A8A7A5",
+                        color=COLOR_TEXT_WHITE if is_active else COLOR_TEXT_TERTIARY,
                     )
                 ],
                 spacing=4,
@@ -428,7 +411,7 @@ def bottom_nav() -> ft.Container:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             expand=True,
-            bgcolor="#5A3D8A" if is_active else "white",
+            bgcolor=BG_NAV_ACTIVE if is_active else BG_NAV_INACTIVE,
             alignment=ft.alignment.Alignment(0, 0),
         )
         controls.append(btn)
@@ -440,51 +423,8 @@ def bottom_nav() -> ft.Container:
             alignment=ft.MainAxisAlignment.START,
         ),
         width=float("inf"),
-        height=60,
+        height=NAV_HEIGHT,
         expand=False,
-        bgcolor="#F5F4F1",
-        border=ft.border.Border.only(bottom=ft.border.BorderSide(1, "#E5E4E1")),
+        bgcolor=BG_NAV_CONTAINER,
+        border=ft.border.Border.only(bottom=ft.border.BorderSide(1, BG_BORDER)),
     )
-
-
-async def main(page: ft.Page):
-    """Точка входа приложения."""
-    page.title = "PulseteAdmin"
-    page.theme_mode = ft.ThemeMode.LIGHT
-    page.theme = ft.Theme(font_family="Inter")
-    page.bg_color = "#F5F4F1"
-    page.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
-    page.scroll = ft.ScrollMode.ADAPTIVE
-
-    api = ApiService()
-
-    students_data = await api.get_students()
-    answers_data = await api.get_answers()
-    questions_data = await api.get_questions()
-    print(f"Loaded: {len(students_data)} students, {len(answers_data)} answers, {len(questions_data)} questions")
-
-    students_column, load_data, render_student_list = students_page(
-        students_data, answers_data, questions_data, page, api
-    )
-
-    bottom = bottom_nav()
-
-    page.controls.append(
-        ft.Column(
-            controls=[students_column, bottom],
-            spacing=0,
-            alignment=ft.MainAxisAlignment.START,
-        )
-    )
-
-    render_student_list()
-
-    try:
-        import asyncio
-        await asyncio.Future()
-    finally:
-        await api.close()
-
-
-if __name__ == "__main__":
-    ft.run(main)
