@@ -136,6 +136,27 @@
         <Execute>
           <option name="pattern" value=".\.venv\Scripts\python.exe test_flet.py" />
         </Execute>
+        <Execute>
+          <option name="pattern" value="python venv *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value=".venvScriptsActivate.ps1" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -m py_compile &quot;C:/Users/sserg/IdeaProjects/PulseteAdmin/main.py&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="pip show *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -c &quot;import flet as ft; icons = [x for x in dir(ft.icons.Icons) if not x.startswith('_')]; print(icons[:30])&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -c &quot;import flet as ft; print(hasattr(ft.border.Border, 'all')); print(hasattr(ft.border.BorderSide, '__init__'))&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -c &quot;import flet as ft; print(ft.icons.Icons.ADD)&quot;" />
+        </Execute>
       </list>
     </option>
     <option name="autoApprovedReads">
