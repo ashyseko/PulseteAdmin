@@ -1,8 +1,12 @@
 """Константы приложения: цвета, строки, URL."""
 
+import os
 from datetime import datetime, timedelta
 
 API_BASE_URL = "http://localhost:8000"
+
+# --- GigaChat ---
+GIGACHAT_API_KEY = os.environ.get("GIGACHAT_API_KEY", "")
 
 # --- Цвета текста ---
 COLOR_TEXT_PRIMARY = "#1A1918"
