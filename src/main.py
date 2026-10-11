@@ -16,7 +16,7 @@ async def main(page: ft.Page):
     page.theme = ft.Theme(font_family=FONT_FAMILY)
     page.bg_color = BG_COLOR_CARD
     page.horizontal_alignment = ft.CrossAxisAlignment.STRETCH
-    page.scroll = ft.ScrollMode.ADAPTIVE
+    page.scroll = None
 
     api = ApiService()
 
@@ -25,19 +25,21 @@ async def main(page: ft.Page):
     questions_data = await api.get_questions()
     print(f"Loaded: {len(students_data)} students, {len(answers_data)} answers, {len(questions_data)} questions")
 
-    students_column, load_data, render_student_list = students_page(
+    header, add_button, scrollable_list, load_data, render_student_list = students_page(
         students_data, answers_data, questions_data, page, api
     )
 
     bottom = bottom_nav()
 
-    page.controls.append(
-        ft.Column(
-            controls=[students_column, bottom],
-            spacing=0,
-            alignment=ft.MainAxisAlignment.START,
-        )
+    main_column = ft.Column(
+        controls=[header, add_button, scrollable_list, bottom],
+        spacing=0,
+        alignment=ft.MainAxisAlignment.START,
+        expand=True,
+        horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
     )
+
+    page.controls.append(main_column)
 
     render_student_list()
 

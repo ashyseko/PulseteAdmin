@@ -253,7 +253,7 @@ def students_page(
 
         name_text = ft.Text(student["name"], size=14, weight=ft.FontWeight.W_400, color=COLOR_TEXT_PRIMARY)
         code_text = ft.Text(str(student["code"]), size=11, weight=ft.FontWeight.W_400, color=COLOR_TEXT_SECONDARY)
-        student_info = ft.Column(controls=[name_text, code_text], spacing=2, height=33)
+        student_info = ft.Column(controls=[name_text, code_text], spacing=2, height=33, width=150)
 
         left_block = ft.Row(
             controls=[avatar, student_info],
@@ -347,6 +347,7 @@ def students_page(
             wrap=True,
         ),
         padding=ft.Padding.only(left=24, right=24, top=8, bottom=8),
+        expand=False,
     )
 
     add_button = ft.Container(
@@ -362,6 +363,7 @@ def students_page(
         padding=ft.Padding.symmetric(vertical=14, horizontal=20),
         margin=ft.Margin.only(left=2, right=2, top=4, bottom=4),
         on_click=_on_add_click,
+        expand=False,
     )
 
     student_list_container = ft.Container(
@@ -369,18 +371,17 @@ def students_page(
         bgcolor=BG_COLOR_CARD,
         margin=ft.Margin.only(top=2),
         padding=ft.Padding.symmetric(horizontal=2),
-    )
-
-    column = ft.Column(
-        controls=[
-            header, add_button, student_list_container,
-        ],
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        scroll=ft.ScrollMode.AUTO,
         expand=True,
     )
 
-    return column, _load_data, _render_student_list
+    scrollable_list = ft.Column(
+        controls=[student_list_inner],
+        margin=ft.Margin.only(top=2),
+        expand=True,
+        scroll=ft.ScrollMode.AUTO,
+    )
+
+    return header, add_button, scrollable_list, _load_data, _render_student_list
 
 
 # --- Нижняя навигация ---
