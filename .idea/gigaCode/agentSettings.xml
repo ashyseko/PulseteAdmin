@@ -199,6 +199,15 @@
         <Execute>
           <option name="pattern" value="Remove-Item venv *" />
         </Execute>
+        <Execute>
+          <option name="pattern" value="python -m py_compile src/ui.py" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="echo *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -c &quot;import flet; print(flet.__version__)&quot;" />
+        </Execute>
       </list>
     </option>
     <option name="autoApprovedReads">

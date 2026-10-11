@@ -34,11 +34,11 @@ async def main(page: ft.Page):
     print(f"Loaded: {len(students_data)} students, {len(answers_data)} answers, {len(questions_data)} questions")
 
     # Create all pages
-    header_overview, scrollable_overview, render_overview = overview_page(
+    header_overview, scrollable_overview, render_overview, load_data_overview = overview_page(
         students_data, answers_data, questions_data, page, api
     )
 
-    header_dynamic, scrollable_dynamic, render_dynamic = dynamic_page(
+    header_dynamic, scrollable_dynamic, render_dynamic, load_data_dynamic = dynamic_page(
         students_data, answers_data, questions_data, page, api
     )
 
@@ -52,7 +52,7 @@ async def main(page: ft.Page):
     def _create_nav_button(label, tab_idx):
         btn = ft.Container(
             content=ft.Column(
-                controls=[ft.Text(label, size=10, weight=ft.FontWeight.W_600, color=COLOR_TEXT_TERTIARY)],
+                controls=[ft.Text(label, size=12, weight=ft.FontWeight.W_600, color=COLOR_TEXT_TERTIARY)],
                 spacing=4,
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -83,11 +83,26 @@ async def main(page: ft.Page):
         border=ft.border.Border.only(bottom=ft.border.BorderSide(1, "#E5E4E1")),
     )
 
-    # Content area - will be swapped
-    _content = ft.Column(
-        controls=[],
+    # Content area - header (fixed) + scrollable content
+    _header_container = ft.Container(
+        content=ft.Column(
+            controls=[],
+            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+        ),
+        expand=False,
+    )
+    _scrollable_container = ft.Container(
+        content=ft.Column(
+            controls=[],
+            expand=True,
+            scroll=ft.ScrollMode.AUTO,
+            horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
+        ),
         expand=True,
-        scroll=ft.ScrollMode.AUTO,
+    )
+    _content = ft.Column(
+        controls=[_header_container, _scrollable_container],
+        expand=True,
         horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
     )
 
@@ -106,13 +121,16 @@ async def main(page: ft.Page):
 
     def _switch_tab(tab_index):
         if tab_index == 0:
-            _content.controls = [header_overview, scrollable_overview]
+            _header_container.content.controls = [header_overview]
+            _scrollable_container.content.controls = [scrollable_overview]
             render_overview()
         elif tab_index == 1:
-            _content.controls = [header_dynamic, scrollable_dynamic]
+            _header_container.content.controls = [header_dynamic]
+            _scrollable_container.content.controls = [scrollable_dynamic]
             render_dynamic()
         elif tab_index == 2:
-            _content.controls = [header_students, add_button, scrollable_students]
+            _header_container.content.controls = [header_students]
+            _scrollable_container.content.controls = [add_button, scrollable_students]
             render_student_list()
 
         # Update nav colors

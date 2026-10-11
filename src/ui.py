@@ -4,6 +4,7 @@ import asyncio
 from datetime import datetime, timedelta
 
 import flet as ft
+import httpx
 
 from src.ai_analyzer import GigaChatService
 from src.api import ApiService
@@ -63,11 +64,11 @@ def get_answer_circle(value: int | None) -> ft.Container:
     """Создать круг с оценкой или прочерком."""
     if value is None:
         return ft.Container(
-            content=ft.Text("—", size=12, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PLACEHOLDER),
-            width=26,
-            height=26,
+            content=ft.Text("—", size=14, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PLACEHOLDER),
+            width=32,
+            height=32,
             bgcolor=BG_ANSWER_NEUTRAL,
-            border_radius=13,
+            border_radius=16,
             alignment=ft.alignment.Alignment(0, 0),
         )
 
@@ -82,11 +83,11 @@ def get_answer_circle(value: int | None) -> ft.Container:
         bg_color = BG_ANSWER_RED
 
     return ft.Container(
-        content=ft.Text(str(value), size=12, weight=ft.FontWeight.W_600, color=color),
-        width=26,
-        height=26,
+        content=ft.Text(str(value), size=14, weight=ft.FontWeight.W_600, color=color),
+        width=32,
+        height=32,
         bgcolor=bg_color,
-        border_radius=13,
+        border_radius=16,
         alignment=ft.alignment.Alignment(0, 0),
     )
 
@@ -154,13 +155,13 @@ def _create_category_row(name: str, value: float | None, max_value: float = 5.0)
 
     score_text = ft.Text(
         f"{value:.1f}" if value is not None else "—",
-        size=15,
+        size=17,
         weight=ft.FontWeight.W_600,
         color=COLOR_TEXT_PRIMARY,
         width=32,
     )
 
-    label = ft.Text(name, size=14, weight=ft.FontWeight.W_500, color=COLOR_TEXT_PRIMARY, expand=True)
+    label = ft.Text(name, size=16, weight=ft.FontWeight.W_500, color=COLOR_TEXT_PRIMARY, expand=True)
 
     return ft.Container(
         content=ft.Row(
@@ -205,7 +206,7 @@ def overview_page(
 
     subtitle_text = ft.Text(
         "Результаты за неделю",
-        size=13,
+        size=15,
         color=COLOR_TEXT_SECONDARY,
     )
 
@@ -230,7 +231,7 @@ def overview_page(
             ws, we = get_week_range(i)
             label = format_week_range(ws, we)
             btn = ft.Container(
-                content=ft.Text(label, size=11, weight=ft.FontWeight.W_500, color=COLOR_TEXT_WHITE if i == _week_offset else COLOR_TEXT_PRIMARY),
+                content=ft.Text(label, size=13, weight=ft.FontWeight.W_500, color=COLOR_TEXT_WHITE if i == _week_offset else COLOR_TEXT_PRIMARY),
                 bgcolor=COLOR_TEXT_PURPLE if i == _week_offset else COLOR_TEXT_WHITE,
                 border=ft.border.Border.all(1, COLOR_TEXT_PURPLE if i == _week_offset else BG_BORDER),
                 border_radius=6,
@@ -240,9 +241,9 @@ def overview_page(
             week_buttons.controls.append(btn)
 
     # Average score display
-    avg_score_text = ft.Text("0.0", size=32, weight=ft.FontWeight.W_400, color=COLOR_TEXT_PRIMARY)
-    avg_change_text = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PURPLE)
-    avg_participants_text = ft.Text("Участвовали 0 из 0 учеников", size=12, color=COLOR_TEXT_PLACEHOLDER)
+    avg_score_text = ft.Text("0.0", size=34, weight=ft.FontWeight.W_400, color=COLOR_TEXT_PRIMARY)
+    avg_change_text = ft.Text("", size=15, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PURPLE)
+    avg_participants_text = ft.Text("Участвовали 0 из 0 учеников", size=14, color=COLOR_TEXT_PLACEHOLDER)
 
     # Category rows container
     category_rows = ft.Column(
@@ -254,7 +255,7 @@ def overview_page(
     # AI Analysis
     ai_analysis_text = ft.Text(
         "Нажмите кнопку для получения AI-анализа",
-        size=13,
+        size=15,
         color=COLOR_TEXT_SECONDARY,
         selectable=True,
     )
@@ -265,7 +266,7 @@ def overview_page(
                 ft.Row(
                     controls=[
                         ft.Icon(ft.icons.Icons.AUTO_AWESOME, size=18, color=COLOR_TEXT_PURPLE),
-                        ft.Text("AI-заключение", size=15, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
+                        ft.Text("AI-заключение", size=17, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
                     ],
                     spacing=8,
                 ),
@@ -310,7 +311,7 @@ def overview_page(
         content=ft.Row(
             controls=[
                 ft.Icon(ft.icons.Icons.AUTO_GRAPH, size=16, color=COLOR_TEXT_WHITE),
-                ft.Text("Получить анализ", size=13, weight=ft.FontWeight.W_600, color=COLOR_TEXT_WHITE),
+                ft.Text("Получить анализ", size=15, weight=ft.FontWeight.W_600, color=COLOR_TEXT_WHITE),
             ],
             spacing=6,
         ),
@@ -319,6 +320,19 @@ def overview_page(
         padding=ft.Padding.symmetric(vertical=8, horizontal=12),
         on_click=lambda e: page.run_task(_run_ai_analysis),
     )
+
+    async def _load_data():
+        """Перезагрузить данные и перерисовать обзор."""
+        try:
+            nonlocal students_data, answers_data, questions_data
+            students_data, answers_data, questions_data = await asyncio.gather(
+                api.get_students(),
+                api.get_answers(),
+                api.get_questions(),
+            )
+            _render()
+        except Exception as ex:
+            _show_snackbar(f"Ошибка загрузки данных: {ex}", error=True)
 
     def _update():
         page.update()
@@ -386,7 +400,7 @@ def overview_page(
             controls=[
                 ft.Row(
                     controls=[
-                        ft.Text("Обзор класса", size=22, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
+                        ft.Text("Обзор класса", size=24, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
                     ],
                     spacing=4,
                     wrap=True,
@@ -394,6 +408,11 @@ def overview_page(
                 ft.Row(
                     controls=[
                         subtitle_text,
+                        ft.IconButton(
+                            icon=ft.icons.Icons.REFRESH,
+                            icon_size=20,
+                            on_click=lambda e: page.run_task(_load_data),
+                        ),
                     ],
                     spacing=4,
                 ),
@@ -402,7 +421,7 @@ def overview_page(
             spacing=4,
             wrap=True,
         ),
-        padding=ft.Padding.only(left=24, right=24, top=8, bottom=8),
+        padding=ft.Padding.only(top=8, bottom=8),
         expand=False,
     )
 
@@ -410,14 +429,22 @@ def overview_page(
     avg_card = ft.Container(
         content=ft.Column(
             controls=[
-                ft.Text("Средний балл", size=15, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY, text_align=ft.TextAlign.CENTER),
-                avg_score_text,
-                avg_change_text,
-                avg_participants_text,
+                ft.Row(
+                    controls=[
+                        ft.Column(
+                            controls=[
+                                ft.Text("Средний балл", size=17, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY, text_align=ft.TextAlign.CENTER),
+                                avg_score_text,
+                                avg_change_text,
+                                avg_participants_text,
+                            ],
+                            spacing=4,
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
             ],
-            spacing=4,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            tight=True,
         ),
         bgcolor=BG_COLOR_CARD,
         padding=ft.Padding.symmetric(vertical=20, horizontal=20),
@@ -430,7 +457,7 @@ def overview_page(
         scroll=ft.ScrollMode.AUTO,
     )
 
-    return header, scrollable_content, _render
+    return header, scrollable_content, _render, _load_data
 
 
 def _format_short_date(dt: datetime) -> str:
@@ -476,12 +503,12 @@ def dynamic_page(
 
     subtitle_text = ft.Text(
         "Сравнение с прошлыми неделями",
-        size=13,
+        size=15,
         color=COLOR_TEXT_SECONDARY,
     )
 
     # Average score by week chart
-    chart_title = ft.Text("Средний балл по неделям", size=15, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY, text_align=ft.TextAlign.CENTER)
+    chart_title = ft.Text("Средний балл по неделям", size=17, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY, text_align=ft.TextAlign.CENTER)
     chart_weeks = ft.Column(controls=[], spacing=0)
 
     # Category change rows
@@ -489,6 +516,28 @@ def dynamic_page(
 
     def _update():
         page.update()
+
+    async def _load_data():
+        """Перезагрузить данные и перерисовать динамику."""
+        try:
+            nonlocal students_data, answers_data, questions_data
+            students_data, answers_data, questions_data = await asyncio.gather(
+                api.get_students(),
+                api.get_answers(),
+                api.get_questions(),
+            )
+            _render()
+        except Exception as ex:
+            _show_snackbar(f"Ошибка загрузки данных: {ex}", error=True)
+
+    def _show_snackbar(message: str, error: bool = False):
+        snackbar = ft.SnackBar(
+            content=ft.Text(message),
+            bgcolor=BG_SNACKBAR_ERROR if error else BG_SNACKBAR_SUCCESS,
+        )
+        page.snack_bar = snackbar
+        page.snack_bar.open = True
+        _update()
 
     def _render():
         # Filter current week answers
@@ -520,14 +569,14 @@ def dynamic_page(
             if avg is None:
                 bar_height = 8
                 bar_color = BG_ANSWER_NEUTRAL
-                value_text = ft.Text("—", size=11, color=COLOR_TEXT_PLACEHOLDER)
-                label_text = ft.Text(_format_short_date(ws), size=10, color=COLOR_TEXT_PLACEHOLDER)
+                value_text = ft.Text("—", size=13, color=COLOR_TEXT_PLACEHOLDER)
+                label_text = ft.Text(_format_short_date(ws), size=12, color=COLOR_TEXT_PLACEHOLDER)
             else:
                 is_current = ws == week_start
                 bar_height = max(8, (avg / max_avg) * chart_height)
                 bar_color = COLOR_TEXT_PURPLE if is_current else BG_ANSWER_GREEN
-                value_text = ft.Text(f"{avg:.1f}", size=11, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY if is_current else COLOR_TEXT_SECONDARY)
-                label_text = ft.Text(_format_short_date(ws), size=10, weight=ft.FontWeight.W_600 if is_current else ft.FontWeight.W_400, color=COLOR_TEXT_PURPLE if is_current else COLOR_TEXT_PLACEHOLDER)
+                value_text = ft.Text(f"{avg:.1f}", size=13, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY if is_current else COLOR_TEXT_SECONDARY)
+                label_text = ft.Text(_format_short_date(ws), size=12, weight=ft.FontWeight.W_600 if is_current else ft.FontWeight.W_400, color=COLOR_TEXT_PURPLE if is_current else COLOR_TEXT_PLACEHOLDER)
 
             chart_row.controls.append(ft.Column(
                 controls=[
@@ -574,13 +623,13 @@ def dynamic_page(
                     controls=[
                         ft.Column(
                             controls=[
-                                ft.Text(q["text"], size=14, weight=ft.FontWeight.W_500, color=COLOR_TEXT_PRIMARY),
-                                ft.Text(was_str, size=12, color=COLOR_TEXT_PLACEHOLDER) if was_str else ft.Container(),
+                                ft.Text(q["text"], size=16, weight=ft.FontWeight.W_500, color=COLOR_TEXT_PRIMARY),
+                                ft.Text(was_str, size=14, color=COLOR_TEXT_PLACEHOLDER) if was_str else ft.Container(),
                             ],
                             expand=True,
                             spacing=2,
                         ),
-                        ft.Text(delta_str, size=16, weight=ft.FontWeight.W_700, color=delta_c, width=40, text_align=ft.TextAlign.RIGHT),
+                        ft.Text(delta_str, size=18, weight=ft.FontWeight.W_700, color=delta_c, width=40, text_align=ft.TextAlign.RIGHT),
                     ],
                     spacing=12,
                 ),
@@ -598,7 +647,7 @@ def dynamic_page(
             controls=[
                 ft.Row(
                     controls=[
-                        ft.Text("Динамика", size=22, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
+                        ft.Text("Динамика", size=24, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
                     ],
                     spacing=4,
                     wrap=True,
@@ -606,6 +655,11 @@ def dynamic_page(
                 ft.Row(
                     controls=[
                         subtitle_text,
+                        ft.IconButton(
+                            icon=ft.icons.Icons.REFRESH,
+                            icon_size=20,
+                            on_click=lambda e: page.run_task(_load_data),
+                        ),
                     ],
                     spacing=4,
                 ),
@@ -613,14 +667,20 @@ def dynamic_page(
             spacing=4,
             wrap=True,
         ),
-        padding=ft.Padding.only(left=24, right=24, top=8, bottom=8),
+        padding=ft.Padding.only(top=8, bottom=8),
         expand=False,
     )
 
     # Chart card
     chart_card = ft.Container(
         content=ft.Column(
-            controls=[chart_title, chart_weeks],
+            controls=[
+                ft.Row(
+                    controls=[chart_title],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+                chart_weeks,
+            ],
             spacing=12,
         ),
         bgcolor=BG_COLOR_CARD,
@@ -634,7 +694,7 @@ def dynamic_page(
         scroll=ft.ScrollMode.AUTO,
     )
 
-    return header, scrollable_content, _render
+    return header, scrollable_content, _render, _load_data
 
 
 def students_page(
@@ -652,7 +712,7 @@ def students_page(
 
     subtitle_text = ft.Text(
         SUBTITLE_PLACEHOLDER,
-        size=13,
+        size=15,
         color=COLOR_TEXT_SECONDARY,
     )
 
@@ -683,20 +743,30 @@ def students_page(
     def _on_add_click(e):
         name_field = ft.TextField(
             label="Имя ученика",
+            label_style=ft.TextStyle(color=COLOR_TEXT_PURPLE),
             hint_text="Введите ФИО",
-            expand=True,
             autofocus=True,
+            border_color=COLOR_TEXT_PURPLE,
+            focused_border_color=COLOR_TEXT_PURPLE,
         )
 
         dialog = ft.AlertDialog(
-            title=ft.Text("Добавить ученика"),
+            title=ft.Container(
+                content=ft.Text("Добавить ученика", size=16, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
+                alignment=ft.alignment.Alignment(0, 0),
+            ),
             content=ft.Column(
                 controls=[name_field],
                 tight=True,
-                expand=True,
+                expand=False,
             ),
             actions=[
-                ft.TextButton("Отмена", on_click=lambda ie: setattr(dialog, "open", False) or page.update()),
+                ft.Button(
+                    "Отмена",
+                    bgcolor=COLOR_TEXT_WHITE,
+                    color=COLOR_TEXT_PURPLE,
+                    on_click=lambda ie: setattr(dialog, "open", False) or page.update(),
+                ),
                 ft.Button(
                     "Добавить",
                     bgcolor=COLOR_TEXT_PURPLE,
@@ -705,7 +775,7 @@ def students_page(
                     on_click=lambda ie: page.run_task(_create_student, ie.control.data.value),
                 ),
             ],
-            actions_alignment=ft.MainAxisAlignment.END,
+            actions_alignment=ft.MainAxisAlignment.CENTER,
             open=True,
         )
 
@@ -722,10 +792,9 @@ def students_page(
             _close_dialog()
             await _load_data()
             _show_snackbar(f"Ученик {student['name']} добавлен")
-        except httpx.HTTPStatusError as ex:
-            _show_snackbar(f"Ошибка: {ex.response.status_code}", error=True)
         except Exception as ex:
-            _show_snackbar("Ошибка подключения к серверу", error=True)
+            status = getattr(getattr(ex, 'response', None), 'status_code', None)
+            _show_snackbar(f"Ошибка: {status}" if status else "Ошибка подключения к серверу", error=True)
 
     async def _load_data():
         """Перезагрузить данные и перерисовать список."""
@@ -791,7 +860,7 @@ def students_page(
         initials = get_initials(student["name"])
 
         avatar = ft.Container(
-            content=ft.Text(initials, size=12, weight=ft.FontWeight.W_600, color=get_avatar_color(has_answers)),
+            content=ft.Text(initials, size=14, weight=ft.FontWeight.W_600, color=get_avatar_color(has_answers)),
             width=36,
             height=36,
             bgcolor=get_avatar_bg(has_answers),
@@ -799,7 +868,7 @@ def students_page(
             alignment=ft.alignment.Alignment(0, 0),
         )
 
-        name_text = ft.Text(student["name"], size=14, weight=ft.FontWeight.W_400, color=COLOR_TEXT_PRIMARY)
+        name_text = ft.Text(student["name"], size=16, weight=ft.FontWeight.W_400, color=COLOR_TEXT_PRIMARY)
         code_text = ft.Text(
             f"{student['code']}{f'  •  {format_last_answer(last_time).strip()}' if last_time else ''}",
             size=11,
@@ -826,7 +895,7 @@ def students_page(
                     content=ft.Row(
                         controls=[
                             ft.Icon(ft.icons.Icons.DELETE_OUTLINE, size=18, color=COLOR_TEXT_RED),
-                            ft.Text("Удалить", size=13, color=COLOR_TEXT_RED),
+                            ft.Text("Удалить", size=15, color=COLOR_TEXT_RED),
                         ],
                         spacing=8,
                     ),
@@ -851,10 +920,18 @@ def students_page(
 
     def _show_delete_dialog(student: dict):
         dialog = ft.AlertDialog(
-            title=ft.Text("Удалить ученика"),
+            title=ft.Container(
+                content=ft.Text("Удалить ученика", size=16, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
+                alignment=ft.alignment.Alignment(0, 0),
+            ),
             content=ft.Text(f"Вы уверены, что хотите удалить {student['name']}?"),
             actions=[
-                ft.TextButton("Отмена", on_click=lambda ie: page.overlay.remove(dialog) or page.update()),
+                ft.Button(
+                    "Отмена",
+                    bgcolor=COLOR_TEXT_WHITE,
+                    color=COLOR_TEXT_PURPLE,
+                    on_click=lambda ie: setattr(dialog, "open", False) or page.update(),
+                ),
                 ft.Button(
                     "Удалить",
                     bgcolor=COLOR_TEXT_RED,
@@ -862,7 +939,7 @@ def students_page(
                     on_click=lambda ie: page.run_task(_confirm_delete, student),
                 ),
             ],
-            actions_alignment=ft.MainAxisAlignment.END,
+            actions_alignment=ft.MainAxisAlignment.CENTER,
             open=True,
         )
 
@@ -878,7 +955,7 @@ def students_page(
         except Exception as ex:
             _show_snackbar(f"Ошибка удаления: {ex}", error=True)
 
-    def _on_refresh_click(e):
+    async def _on_refresh_click(e):
         page.run_task(_load_data)
 
     header = ft.Container(
@@ -886,7 +963,7 @@ def students_page(
             controls=[
                 ft.Row(
                     controls=[
-                        ft.Text("Ученики", size=22, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
+                        ft.Text("Ученики", size=24, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
                     ],
                     spacing=4,
                     wrap=True,
@@ -906,7 +983,7 @@ def students_page(
             spacing=4,
             wrap=True,
         ),
-        padding=ft.Padding.only(left=24, right=24, top=8, bottom=8),
+        padding=ft.Padding.only(top=8, bottom=8),
         expand=False,
     )
 
@@ -924,14 +1001,6 @@ def students_page(
         margin=ft.Margin.only(top=4, bottom=4),
         on_click=_on_add_click,
         expand=False,
-    )
-
-    student_list_container = ft.Container(
-        content=student_list_inner,
-        bgcolor=BG_COLOR_CARD,
-        margin=ft.Margin.only(top=2),
-        padding=ft.Padding.symmetric(horizontal=2),
-        expand=True,
     )
 
     scrollable_list = ft.Column(
@@ -963,7 +1032,7 @@ def bottom_nav(on_tab_change=None) -> ft.Container:
                 controls=[
                     ft.Text(
                         label,
-                        size=10,
+                        size=12,
                         weight=ft.FontWeight.W_600,
                         color=COLOR_TEXT_WHITE if is_active else COLOR_TEXT_TERTIARY,
                     )
