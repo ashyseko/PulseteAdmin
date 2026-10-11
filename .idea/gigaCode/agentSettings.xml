@@ -157,6 +157,48 @@
         <Execute>
           <option name="pattern" value="python -c &quot;import flet as ft; print(ft.icons.Icons.ADD)&quot;" />
         </Execute>
+        <Execute>
+          <option name="pattern" value="mkdir src *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -m src.main" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Start-Process python *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -m py_compile src/main.py" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Invoke-WebRequest -Uri &quot;https://developers.sber.ru/docs/files/openapi/gigachat/api.yml&quot; -UseBasicParsing" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -m py_compile src/ai_analyzer.py src/constants.py" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -c &quot;import socket; print(socket.getaddrinfo('ngw.devices.sberbank.ru', 9443))&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -c &quot;import requests; r = requests.post('https://ngw.devices.sberbank.ru:9443/api/v2/oauth', data={'grant_type': 'client_credentials', 'scope': 'GIGACHAT_API_PERS'}, headers={'Authorization': 'Basic YTM2Njc1NWEtNjkxNS00MDFjLWEzMTktYjgxOWFjZjM4NjlmOjRiZjk3ZjJhLWUyNTYtNGNjOS05OGY0LTgwYzk5ZjM5OThlNg==', 'X-Request-ID': 'test-123'}, verify=False); print(f'Status: {r.status_code}'); print(f'Body: {r.text}'); print(f'Headers: {dict(r.headers)}')&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -c &quot;from gigachat import GigaChat; g = GigaChat(credentials='YTM2Njc1NWEtNjkxNS00MDFjLWEzMTktYjgxOWFjZjM4NjlmOjRiZjk3ZjJhLWUyNTYtNGNjOS05OGY0LTgwYzk5ZjM5OThlNg==', base_url='https://api.giga.chat/v1', verify_ssl_certs=False, scope='GIGACHAT_API_PERS', model='GigaChat-2'); resp = g.chat.create({'messages': [{'role': 'system', 'content': 'Ты помощник. Отвечай кратко.'}, {'role': 'user', 'content': 'Сколько будет 2+2?'}]}); print(resp.choices[0].message.content)&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -c &quot;from gigachat import GigaChat; g = GigaChat(credentials='YTM2Njc1NWEtNjkxNS00MDFjLWEzMTktYjgxOWFjZjM4NjlmOjRiZjk3ZjJhLWUyNTYtNGNjOS05OGY0LTgwYzk5ZjM5OThlNg==', base_url='https://api.giga.chat/v1', verify_ssl_certs=False, scope='GIGACHAT_API_PERS', model='GigaChat-2'); resp = g.chat.create({'messages': [{'role': 'system', 'content': 'Ты помощник. Отвечай кратко.'}, {'role': 'user', 'content': 'Сколько будет 2+2?'}]}); print(resp.model_dump())&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -m py_compile src/ai_analyzer.py" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python -c &quot;import sys; print(sys.executable)&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="python" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Remove-Item venv *" />
+        </Execute>
       </list>
     </option>
     <option name="autoApprovedReads">

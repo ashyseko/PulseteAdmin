@@ -5,8 +5,10 @@ from datetime import datetime, timedelta
 
 import flet as ft
 
+from src.ai_analyzer import GigaChatService
 from src.api import ApiService
 from src.constants import (
+    APP_TITLE,
     BG_ANSWER_GREEN,
     BG_ANSWER_NEUTRAL,
     BG_ANSWER_RED,
@@ -40,6 +42,8 @@ from src.constants import (
     format_week_range,
     filter_answers_by_week,
 )
+
+import os
 
 
 # --- Вспомогательные функции ---
@@ -247,6 +251,75 @@ def overview_page(
         expand=True,
     )
 
+    # AI Analysis
+    ai_analysis_text = ft.Text(
+        "Нажмите кнопку для получения AI-анализа",
+        size=13,
+        color=COLOR_TEXT_SECONDARY,
+        selectable=True,
+    )
+    ai_loading = ft.ProgressRing(width=20, height=20, visible=False, stroke_width=2)
+    ai_container = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Row(
+                    controls=[
+                        ft.Icon(ft.icons.Icons.AUTO_AWESOME, size=18, color=COLOR_TEXT_PURPLE),
+                        ft.Text("AI-заключение", size=15, weight=ft.FontWeight.W_600, color=COLOR_TEXT_PRIMARY),
+                    ],
+                    spacing=8,
+                ),
+                ai_loading,
+                ai_analysis_text,
+            ],
+            spacing=8,
+        ),
+        bgcolor=BG_COLOR_CARD,
+        padding=ft.Padding.symmetric(vertical=16, horizontal=16),
+        margin=ft.Margin.only(top=4, bottom=2),
+        border_radius=8,
+        border=ft.border.Border.all(1, BG_BORDER),
+    )
+
+    async def _run_ai_analysis():
+        """Запускает AI-анализ текущей недели."""
+        api_key = os.environ.get("GIGACHAT_API_KEY", "")
+        if not api_key:
+            _show_snackbar("Сначала настройте переменную окружения GIGACHAT_API_KEY", error=True)
+            return
+
+        ai_loading.visible = True
+        ai_analysis_text.value = "Анализирую данные..."
+        _update()
+
+        try:
+            week_answers = filter_answers_by_week(answers_data, week_start, week_end)
+            service = GigaChatService(api_key=api_key)
+            analysis = await service.analyze_week(questions_data, week_answers, week_label)
+            ai_analysis_text.value = analysis
+            _show_snackbar("AI-анализ готов")
+            await service.close()
+        except Exception as ex:
+            ai_analysis_text.value = f"Ошибка: {str(ex)}"
+            _show_snackbar(f"Ошибка AI-анализа: {ex}", error=True)
+        finally:
+            ai_loading.visible = False
+            _update()
+
+    ai_button = ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Icon(ft.icons.Icons.AUTO_GRAPH, size=16, color=COLOR_TEXT_WHITE),
+                ft.Text("Получить анализ", size=13, weight=ft.FontWeight.W_600, color=COLOR_TEXT_WHITE),
+            ],
+            spacing=6,
+        ),
+        bgcolor=COLOR_TEXT_PURPLE,
+        border_radius=6,
+        padding=ft.Padding.symmetric(vertical=8, horizontal=12),
+        on_click=lambda e: page.run_task(_run_ai_analysis),
+    )
+
     def _update():
         page.update()
 
@@ -352,7 +425,7 @@ def overview_page(
     )
 
     scrollable_content = ft.Column(
-        controls=[avg_card, category_rows],
+        controls=[avg_card, category_rows, ai_container, ai_button],
         expand=True,
         scroll=ft.ScrollMode.AUTO,
     )
