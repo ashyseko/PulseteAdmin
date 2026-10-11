@@ -96,93 +96,54 @@ def get_avatar_color(has_answers: bool) -> str:
     return "#5A3D8A" if has_answers else "#8A8986"
 
 
-class StudentsPage(ft.Column):
-    """Страница списка учеников."""
+def students_page(
+        students_data: list[dict],
+        answers_data: list[dict],
+        questions_data: list[dict],
+        page: ft.Page,
+        api: ApiService,
+):
+    """Страница списка учеников. Получает готовые данные для рендера."""
+    page.title = "Пульс класса - Админ"
+    page.padding = 0
+    page.window_width = 400
+    page.window_height = 800
 
-    def __init__(self, api: ApiService, root_page: ft.Page):
-        super().__init__()
-        self.api = api
-        self._pg = root_page
-        self.students_data: list[dict] = []
-        self.questions_data: list[dict] = []
-        self.answers_data: list[dict] = []
+    ft.Text(
+        "Test",
+        size=13,
+        color="#6D6C6A",
+    )
 
-        self.expand = False
-        self.spacing = 0
+    subtitle_text = ft.Text(
+        "Последние ответы · загрузка...",
+        size=13,
+        color="#6D6C6A",
+    )
 
-        self.subtitle_text = ft.Text(
-            "Последние ответы · загрузка...",
-            size=13,
-            color="#6D6C6A",
-        )
+    student_list_inner = ft.Column(
+        controls=[],
+        spacing=2,
+    )
 
-        self.student_list_inner = ft.Column(
-            controls=[],
-            spacing=2,
-        )
+    def _update():
+        page.update()
 
-        self.header = ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Row(
-                        controls=[
-                            ft.Text("Ученики", size=22, weight=ft.FontWeight.W_600, color="#1A1918"),
-                            ft.Container(
-                                content=ft.Text("21 – 27 апр", size=12, weight=ft.FontWeight.W_500, color="#1A1918"),
-                                bgcolor="white",
-                                padding=ft.Padding.symmetric(horizontal=14, vertical=10),
-                                border_radius=6,
-                            ),
-                        ],
-                        spacing=4,
-                        align=ft.CrossAxisAlignment.CENTER,
-                        wrap=True,
-                    ),
-                    self.subtitle_text,
-                ],
-                spacing=4,
-                wrap=True,
-            ),
-            padding=ft.Padding.only(left=24, right=24, top=8, bottom=8),
-        )
-
-        self.add_button = ft.Container(
-            content=ft.Row(
-                controls=[
-                    ft.Icon(ft.icons.Icons.ADD, size=18, color="#FFFFFF"),
-                    ft.Text("Добавить ученика", size=15, weight=ft.FontWeight.W_600, color="#FFFFFF"),
-                ],
-                spacing=8,
-                align=ft.CrossAxisAlignment.CENTER,
-            ),
-            bgcolor="#5A3D8A",
-            padding=ft.Padding.symmetric(vertical=14, horizontal=20),
-            margin=ft.Margin.only(left=2, right=2, top=4, bottom=4),
-            on_click=self._on_add_click,
-        )
-
-        self.student_list_container = ft.Container(
-            content=self.student_list_inner,
-            bgcolor="white",
-            margin=ft.Margin.only(top=2),
-            padding=ft.Padding.symmetric(horizontal=2),
-        )
-
-        self.controls = [self.header, self.add_button, self.student_list_container]
-
-    def _update(self):
-        self._pg.update()
-
-    def _show_snackbar(self, message: str, error: bool = False):
+    def _show_snackbar(message: str, error: bool = False):
         snackbar = ft.SnackBar(
             content=ft.Text(message),
             bgcolor="#A4442A" if error else "#2F6B47",
         )
-        self._pg.snack_bar = snackbar
-        self._pg.snack_bar.open = True
-        self._update()
+        page.snack_bar = snackbar
+        page.snack_bar.open = True
+        _update()
 
-    def _on_add_click(self, e):
+    def _close_dialog():
+        if page.dialog:
+            page.dialog.open = False
+            _update()
+
+    def _on_add_click(e):
         name_field = ft.TextField(
             label="Имя ученика",
             hint_text="Введите ФИО",
@@ -198,60 +159,52 @@ class StudentsPage(ft.Column):
                 expand=True,
             ),
             actions=[
-                ft.TextButton("Отмена", on_click=self._close_dialog),
-                ft.ElevatedButton(
+                ft.TextButton("Отмена", on_click=_close_dialog),
+                ft.Button(
                     "Добавить",
                     bgcolor="#5A3D8A",
                     color="#FFFFFF",
-                    on_click=lambda _: self._create_student(name_field.value),
+                    on_click=lambda _: asyncio.create_task(_create_student(name_field.value)),
                 ),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
         )
 
-        self._pg.dialog = dialog
+        page.dialog = dialog
         dialog.open = True
-        self._update()
-        name_field.focus()
+        _update()
 
-    def _close_dialog(self):
-        if self._pg.dialog:
-            self._pg.dialog.open = False
-            self._update()
-
-    async def _create_student(self, name: str):
+    async def _create_student(name: str):
         if not name or not name.strip():
-            self._show_snackbar("Введите имя ученика", error=True)
+            _show_snackbar("Введите имя ученика", error=True)
             return
 
         try:
-            student = await self.api.create_student(name.strip())
-            self._close_dialog()
-            await self._load_data()
-            self._show_snackbar(f"Ученик {student['name']} добавлен")
+            student = await api.create_student(name.strip())
+            _close_dialog()
+            await _load_data()
+            _show_snackbar(f"Ученик {student['name']} добавлен")
         except httpx.HTTPStatusError as ex:
-            self._show_snackbar(f"Ошибка: {ex.response.status_code}", error=True)
+            _show_snackbar(f"Ошибка: {ex.response.status_code}", error=True)
         except Exception as ex:
-            self._show_snackbar(f"Ошибка подключения к серверу", error=True)
+            _show_snackbar(f"Ошибка подключения к серверу", error=True)
 
-    async def _load_data(self):
+    async def _load_data():
+        """Перезагрузить данные и перерисовать список."""
         try:
-            students, answers, questions = await asyncio.gather(
-                self.api.get_students(),
-                self.api.get_answers(),
-                self.api.get_questions(),
+            nonlocal students_data, answers_data, questions_data
+            students_data, answers_data, questions_data = await asyncio.gather(
+                api.get_students(),
+                api.get_answers(),
+                api.get_questions(),
             )
-            print(f"Loaded: {len(students)} students, {len(answers)} answers, {len(questions)} questions")
-            self.students_data = students
-            self.answers_data = answers
-            self.questions_data = questions
-            self._render_student_list()
+            _render_student_list()
         except Exception as ex:
-            self._show_snackbar(f"Ошибка загрузки данных: {ex}", error=True)
+            _show_snackbar(f"Ошибка загрузки данных: {ex}", error=True)
 
-    def _render_student_list(self):
+    def _render_student_list():
         answers_map: dict[int, dict[int, int]] = {}
-        for ans in self.answers_data:
+        for ans in answers_data:
             sid = ans["student_id"]
             if sid not in answers_map:
                 answers_map[sid] = {}
@@ -260,38 +213,38 @@ class StudentsPage(ft.Column):
         def sort_key(student):
             has_answers = any(
                 a is not None
-                for a in self._get_last_answers(student["id"], answers_map)
+                for a in _get_last_answers(student["id"], answers_map)
             )
             return (not has_answers, student["name"])
 
-        sorted_students = sorted(self.students_data, key=sort_key)
+        sorted_students = sorted(students_data, key=sort_key)
 
-        self.student_list_inner.controls.clear()
+        student_list_inner.controls.clear()
         print(f"Rendering {len(sorted_students)} students")
 
         for student in sorted_students:
-            last_answers = self._get_last_answers(student["id"], answers_map)
-            row = self._create_student_row(student, last_answers)
-            self.student_list_inner.controls.append(row)
+            last_answers = _get_last_answers(student["id"], answers_map)
+            row = _create_student_row(student, last_answers)
+            student_list_inner.controls.append(row)
 
         students_with_answers = sum(
-            1 for s in self.students_data
-            if any(a is not None for a in self._get_last_answers(s["id"], answers_map))
+            1 for s in students_data
+            if any(a is not None for a in _get_last_answers(s["id"], answers_map))
         )
-        self.subtitle_text.value = (
-            f"Последние ответы · {students_with_answers} из {len(self.students_data)} учеников"
+        subtitle_text.value = (
+            f"Последние ответы · {students_with_answers} из {len(students_data)} учеников"
         )
 
-        self._update()
+        _update()
 
-    def _get_last_answers(self, student_id: int, answers_map: dict) -> list[int | None]:
+    def _get_last_answers(student_id: int, answers_map: dict) -> list[int | None]:
         student_answers = answers_map.get(student_id, {})
         result = []
-        for q in sorted(self.questions_data, key=lambda x: x["id"]):
+        for q in sorted(questions_data, key=lambda x: x["id"]):
             result.append(student_answers.get(q["id"]))
         return result[:5]
 
-    def _create_student_row(self, student: dict, last_answers: list[int | None]) -> ft.Container:
+    def _create_student_row(student: dict, last_answers: list[int | None]) -> ft.Container:
         has_answers = any(a is not None for a in last_answers)
         initials = get_initials(student["name"])
 
@@ -311,14 +264,14 @@ class StudentsPage(ft.Column):
         left_block = ft.Row(
             controls=[avatar, student_info],
             spacing=10,
-            align=ft.CrossAxisAlignment.CENTER,
+            # align=ft.CrossAxisAlignment.CENTER,
         )
 
         answers_controls = [get_answer_circle(a) for a in last_answers]
         right_block = ft.Row(
             controls=answers_controls,
             spacing=4,
-            align=ft.CrossAxisAlignment.CENTER,
+            # align=ft.CrossAxisAlignment.CENTER,
         )
 
         delete_menu = ft.PopupMenuButton(
@@ -331,9 +284,9 @@ class StudentsPage(ft.Column):
                             ft.Text("Удалить", size=13, color="#A4442A"),
                         ],
                         spacing=8,
-                        align=ft.CrossAxisAlignment.CENTER,
+                        # align=ft.CrossAxisAlignment.CENTER,
                     ),
-                    on_click=lambda e, s=student: self._show_delete_dialog(s),
+                    on_click=lambda e, s=student: _show_delete_dialog(s),
                 ),
             ],
         )
@@ -344,7 +297,7 @@ class StudentsPage(ft.Column):
             content=ft.Row(
                 controls=[left_block, right_block],
                 spacing=10,
-                align=ft.CrossAxisAlignment.CENTER,
+                # align=ft.CrossAxisAlignment.CENTER,
                 expand=True,
             ),
             bgcolor="white",
@@ -353,81 +306,134 @@ class StudentsPage(ft.Column):
             padding=ft.Padding.symmetric(horizontal=12, vertical=10),
         )
 
-    def _show_delete_dialog(self, student: dict):
+    def _show_delete_dialog(student: dict):
         dialog = ft.AlertDialog(
             title=ft.Text("Удалить ученика"),
             content=ft.Text(f"Вы уверены, что хотите удалить {student['name']}?"),
             actions=[
-                ft.TextButton("Отмена", on_click=self._close_dialog),
-                ft.ElevatedButton(
+                ft.TextButton("Отмена", on_click=_close_dialog),
+                ft.Button(
                     "Удалить",
                     bgcolor="#A4442A",
                     color="#FFFFFF",
-                    on_click=lambda _: self._confirm_delete(student),
+                    on_click=lambda _: _confirm_delete(student),
                 ),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
         )
 
-        self._pg.dialog = dialog
+        page.dialog = dialog
         dialog.open = True
-        self._update()
+        _update()
 
-    async def _confirm_delete(self, student: dict):
-        self._close_dialog()
+    async def _confirm_delete(student: dict):
+        _close_dialog()
         try:
-            await self.api.delete_student(student["id"])
-            await self._load_data()
-            self._show_snackbar(f"Ученик {student['name']} удалён")
+            await api.delete_student(student["id"])
+            await _load_data()
+            _show_snackbar(f"Ученик {student['name']} удалён")
         except Exception as ex:
-            self._show_snackbar(f"Ошибка удаления: {ex}", error=True)
+            _show_snackbar(f"Ошибка удаления: {ex}", error=True)
 
-
-class BottomNav(ft.Container):
-    """Нижняя навигация."""
-
-    def __init__(self):
-        super().__init__()
-
-        self.width = float("inf")
-        self.height = 60
-        self.expand = False
-        self.bgcolor = "#F5F4F1"
-        self.border = ft.border.Border.only(bottom=ft.border.BorderSide(1, "#E5E4E1"))
-
-        nav_items = [
-            ("ОБЗОР", False),
-            ("ДИНАМИКА", False),
-            ("УЧЕНИКИ", True),
-        ]
-
-        controls = []
-        for label, is_active in nav_items:
-            btn = ft.Container(
-                content=ft.Column(
+    header = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Row(
                     controls=[
-                        ft.Text(
-                            label,
-                            size=10,
-                            weight=ft.FontWeight.W_600,
-                            color="#FFFFFF" if is_active else "#A8A7A5",
-                        )
+                        ft.Text("Ученики", size=22, weight=ft.FontWeight.W_600, color="#1A1918"),
+                        ft.Container(
+                            content=ft.Text("21 – 27 апр", size=12, weight=ft.FontWeight.W_500, color="#1A1918"),
+                            bgcolor="white",
+                            padding=ft.Padding.symmetric(horizontal=14, vertical=10),
+                            border_radius=6,
+                        ),
                     ],
                     spacing=4,
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    wrap=True,
                 ),
-                expand=True,
-                bgcolor="#5A3D8A" if is_active else "white",
-                alignment=ft.alignment.Alignment(0, 0),
-            )
-            controls.append(btn)
+                subtitle_text,
+            ],
+            spacing=4,
+            wrap=True,
+        ),
+        padding=ft.Padding.only(left=24, right=24, top=8, bottom=8),
+    )
 
-        self.content = ft.Row(
+    add_button = ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Icon(ft.icons.Icons.ADD, size=18, color="#FFFFFF"),
+                ft.Text("Добавить ученика", size=15, weight=ft.FontWeight.W_600, color="#FFFFFF"),
+            ],
+            spacing=8,
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+        bgcolor="#5A3D8A",
+        padding=ft.Padding.symmetric(vertical=14, horizontal=20),
+        margin=ft.Margin.only(left=2, right=2, top=4, bottom=4),
+        on_click=_on_add_click,
+    )
+
+    student_list_container = ft.Container(
+        content=student_list_inner,
+        bgcolor="white",
+        margin=ft.Margin.only(top=2),
+        padding=ft.Padding.symmetric(horizontal=2),
+    )
+
+    column = ft.Column(
+        controls=[
+            header, add_button, student_list_container],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        scroll=ft.ScrollMode.AUTO,
+        expand=True,
+    )
+
+    return column, _load_data, _render_student_list
+
+
+def bottom_nav() -> ft.Container:
+    """Нижняя навигация."""
+    nav_items = [
+        ("ОБЗОР", False),
+        ("ДИНАМИКА", False),
+        ("УЧЕНИКИ", True),
+    ]
+
+    controls = []
+    for label, is_active in nav_items:
+        btn = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        label,
+                        size=10,
+                        weight=ft.FontWeight.W_600,
+                        color="#FFFFFF" if is_active else "#A8A7A5",
+                    )
+                ],
+                spacing=4,
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            expand=True,
+            bgcolor="#5A3D8A" if is_active else "white",
+            alignment=ft.alignment.Alignment(0, 0),
+        )
+        controls.append(btn)
+
+    return ft.Container(
+        content=ft.Row(
             controls=controls,
             spacing=4,
             alignment=ft.MainAxisAlignment.START,
-        )
+        ),
+        width=float("inf"),
+        height=60,
+        expand=False,
+        bgcolor="#F5F4F1",
+        border=ft.border.Border.only(bottom=ft.border.BorderSide(1, "#E5E4E1")),
+    )
 
 
 async def main(page: ft.Page):
@@ -441,20 +447,26 @@ async def main(page: ft.Page):
 
     api = ApiService()
 
-    students_page = StudentsPage(api, page)
-    await students_page._load_data()
+    students_data = await api.get_students()
+    answers_data = await api.get_answers()
+    questions_data = await api.get_questions()
+    print(f"Loaded: {len(students_data)} students, {len(answers_data)} answers, {len(questions_data)} questions")
 
-    bottom_nav = BottomNav()
+    students_column, load_data, render_student_list = students_page(
+        students_data, answers_data, questions_data, page, api
+    )
+
+    bottom = bottom_nav()
 
     page.controls.append(
         ft.Column(
-            controls=[students_page, bottom_nav],
+            controls=[students_column, bottom],
             spacing=0,
             alignment=ft.MainAxisAlignment.START,
         )
     )
 
-    page.update()
+    render_student_list()
 
     try:
         import asyncio
