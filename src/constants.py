@@ -3,7 +3,10 @@
 import os
 from datetime import datetime, timedelta
 
-API_BASE_URL = "http://localhost:8000"
+# ===== СЕРВЕР =====
+SERVER_HOST = "192.168.2.48"
+SERVER_PORT = 8000
+API_BASE_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
 
 # --- GigaChat ---
 GIGACHAT_API_KEY = os.environ.get("GIGACHAT_API_KEY", "")
